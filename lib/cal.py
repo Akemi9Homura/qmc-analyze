@@ -4,9 +4,10 @@
 
 import numpy as np
 
-# 给定一个 idx 计算从这个 idx 到结尾的均值
-def cal_mean(start_index, data_array):
-    if start_index < 0 or start_index >= len(data_array):
-        print(f"Warning: Invalid start index {start_index}.")
-        return None
-    return np.mean(data_array[start_index:], axis=0)
+
+# 给定一个索引 start_idx，计算从该索引开始到数组末尾的均值
+# 调用的时候输入的是开始的 step，需要找到其在 steps 数组中的索引
+def cal_mean(start_idx, data_array):
+    if start_idx < 0 or start_idx >= len(data_array):
+        raise ValueError("start_idx 超出数据数组范围")
+    return np.mean(data_array[start_idx:], axis=0)

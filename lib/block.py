@@ -4,6 +4,7 @@
 
 import numpy as np
 
+
 # X/Y 标准差合成
 def std_err_ratio(X_mean, Y_mean, X_std_err, Y_std_err, cov_XY, data_num):
     ratio_mean = X_mean / Y_mean
