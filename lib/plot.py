@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .block import *
 
-def simple_plot_trace(trace, state=0, end=10000):
+def simple_plot_trace(trace, state=0, step_end=None):
     """
     绘制 trace 中某个态的 S 和 E/norm 随 steps 的变化曲线。
     
@@ -18,34 +18,27 @@ def simple_plot_trace(trace, state=0, end=10000):
         - 如果 end > 最大的 step，则画全程
         - 如果 steps 中没有 end，则画到最接近 end 的那个 step
     """
-    # --- 检查 end 合法性 ---
-    if not isinstance(end, (int, np.integer)) or end <= 0:
-        raise ValueError("Parameter 'end' must be a positive integer.")
-
     steps = trace["steps"]  # 一维数组
+    
+    # --- 默认值：如果不传，就是整个区间 ---
+    if step_end is None:
+        step_end = int(steps[-1])
+
+    # --- step_end 对应的索引 ---
+    end_index = np.searchsorted(steps, step_end, side="right")
+    if end_index == 0 or steps[end_index - 1] != step_end:
+        raise ValueError(f"未找到 step_end = {step_end}")
 
     # 取指定态的数据
     S = trace["S"][state]
     E = trace["E"][state]
     norm = trace["norm"][state]
 
-    # --- 根据 end 决定画到哪个索引 ---
-    max_step = steps.max()
-
-    if end >= max_step:
-        # end 比最大 step 还大，画全程
-        idx_end = len(steps)   # 用作切片的上界（不包含）
-    else:
-        # 在 steps 中找到最接近 end 的那个 step
-        # 返回的是索引，+1 是因为切片右边是开区间，要包含这个点
-        closest_idx = int(np.argmin(np.abs(steps - end)))
-        idx_end = closest_idx + 1
-
     # 做同样的切片，保证长度一致
-    steps_plot = steps[:idx_end]
-    S_plot = S[:idx_end]
-    E_plot = E[:idx_end]
-    norm_plot = norm[:idx_end]
+    steps_plot = steps[:end_index]
+    S_plot = S[:end_index]
+    E_plot = E[:end_index]
+    norm_plot = norm[:end_index]
 
     Enorm_plot = E_plot / norm_plot
 
@@ -57,7 +50,7 @@ def simple_plot_trace(trace, state=0, end=10000):
 
     plt.xlabel("Steps")
     plt.ylabel("E (MeV)")
-    plt.title(f"Trace Plot (state {state}, end={end})")
+    plt.title(f"Trace Plot (state {state}, end={step_end})")
     plt.legend()
     plt.tight_layout()
     plt.show()

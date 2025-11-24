@@ -167,7 +167,7 @@ if __name__ == "__main__":
     
     # 画 S 与 E 的演化图到选定的 end 处
     if args.mode == "plot_se":
-        simple_plot_trace(trace, state=args.state, end=args.end)
+        simple_plot_trace(trace, state=args.state, step_end=args.end)
 
     # 画块分析图，范围是输入的 start 到 end
     if args.mode == "plot_block":
