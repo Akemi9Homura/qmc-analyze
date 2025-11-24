@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .block import *
 
+
 def simple_plot_trace(trace, state=0, step_end=None):
     """
     绘制 trace 中某个态的 S 和 E/norm 随 steps 的变化曲线。
-    
+
     参数
     ----
     trace : dict
@@ -19,7 +20,7 @@ def simple_plot_trace(trace, state=0, step_end=None):
         - 如果 steps 中没有 end，则画到最接近 end 的那个 step
     """
     steps = trace["steps"]  # 一维数组
-    
+
     # --- 默认值：如果不传，就是整个区间 ---
     if step_end is None:
         step_end = int(steps[-1])
@@ -45,8 +46,8 @@ def simple_plot_trace(trace, state=0, step_end=None):
     # --- 画图 ---
     plt.figure(figsize=(8, 5))
 
-    plt.plot(steps_plot, S_plot, label="S", color='green',linewidth=0.5)
-    plt.plot(steps_plot, Enorm_plot, label="E / norm",color='red', linewidth=1)
+    plt.plot(steps_plot, S_plot, label="S", color="green", linewidth=0.5)
+    plt.plot(steps_plot, Enorm_plot, label="E / norm", color="red", linewidth=1)
 
     plt.xlabel("Steps")
     plt.ylabel("E (MeV)")
@@ -54,6 +55,7 @@ def simple_plot_trace(trace, state=0, step_end=None):
     plt.legend()
     plt.tight_layout()
     plt.show()
+
 
 def simple_plot_block(trace, state=0, step_start=None, step_end=None):
     """
@@ -86,10 +88,12 @@ def simple_plot_block(trace, state=0, step_start=None, step_end=None):
     # --- 块分析 ---
     std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg)
     std_errs_S, std_err_errs_S = block_analysis(S_seg)
-    
-    n=len(std_errs)
+
+    n = len(std_errs)
     if len(std_errs_S) != n:
-        raise RuntimeError("E 和 S 的块分析结果长度不一致，请检查 block_analysis 实现。")
+        raise RuntimeError(
+            "E 和 S 的块分析结果长度不一致，请检查 block_analysis 实现。"
+        )
 
     # block_size = 1,2,4,...,2^(n-1)
     lengths = [1 << i for i in range(n)]
@@ -101,7 +105,7 @@ def simple_plot_block(trace, state=0, step_start=None, step_end=None):
         lengths,
         std_errs,
         yerr=std_err_errs,
-        color='red',
+        color="red",
         fmt="o-",
         capsize=4,
         linewidth=1.5,
@@ -113,7 +117,7 @@ def simple_plot_block(trace, state=0, step_start=None, step_end=None):
         lengths,
         std_errs_S,
         yerr=std_err_errs_S,
-        color='blue',
+        color="blue",
         fmt="s--",
         capsize=4,
         linewidth=1.5,
