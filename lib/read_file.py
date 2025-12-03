@@ -29,3 +29,32 @@ def read_trace_file(filename, num_state=1):
     }
 
     return trace
+
+
+# 暂时的读取 replica log 文件的函数
+# 需要读取的行形如 "sidx = 0: Replica E = -9.99271277, J2 = 0.66412419"
+def read_replica_log(filename):
+    """
+    从输出文件中读取所有
+    'Replica E = ..., J2 = ...'
+    行，返回一个 dict，包含:
+        log["E"]  -> numpy.ndarray
+        log["J2"] -> numpy.ndarray
+    """
+    dt = np.dtype(
+        [
+            ("E", np.float64),
+            ("J2", np.float64),
+        ]
+    )
+
+    # Replica E = -9.99507344, J2 = 0.65899345
+    pattern = r"Replica E\s*=\s*([+-eE0-9\.]+),\s*J2\s*=\s*([+-eE0-9\.]+)"
+
+    arr = np.fromregex(filename, pattern, dt)
+
+    log = {
+        "E": arr["E"].copy(),  # 拷贝成普通的 1D array
+        "J2": arr["J2"].copy(),
+    }
+    return log

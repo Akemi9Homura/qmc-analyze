@@ -1,20 +1,11 @@
-"""
-主函数中定义的函数输入量全都是 trace，需要具体处理特定的数据结构
-而不具体到 trace 结构的函数则放在 cal.py 中
-"""
+from .write_file import *
+from .cal import *
+from .block import *
 
-from lib.read_file import *
-from lib.write_file import *
-from lib.cal import *
-from lib.block import *
-from lib.plot import *
-
-import argparse
-import os
+# --- 最终执行操作的主函数 --
 
 
-# 绘制演化图的函数
-# 简单地输出全部的 step，S 与 E
+# 把全部的 step，S 与 E 保存到文件
 def save_SE(trace, tag, state=0):
     fmt = "%d\t%.8e\t%.8e"
     save_to_file(
@@ -27,7 +18,7 @@ def save_SE(trace, tag, state=0):
     )
 
 
-# 输出给定 step 起止范围的 S 与 E
+# 把给定 step 起止范围的 S 与 E 保存到文件
 def save_SE_range(trace, tag, state=0, step_start=None, step_end=None):
     steps = trace["steps"]
     S_values = trace["S"][state]
@@ -65,7 +56,7 @@ def save_SE_range(trace, tag, state=0, step_start=None, step_end=None):
     )
 
 
-# 计算均值的函数
+# 输出从给定起始位置到末尾的均值
 def output_mean_energy(trace, state=0, step_start=None):
     if step_start is not None:
         start_index = np.searchsorted(trace["steps"], step_start, side="left")
@@ -81,8 +72,7 @@ def output_mean_energy(trace, state=0, step_start=None):
     print(f"Mean energy (state={state}, step_start={step_start}): {mean_energy}")
 
 
-# 块分析标准差
-# 设置计算的起止 step
+# 块分析的结果保存到文件
 def save_block_energy(trace, tag, state=0, step_start=None, step_end=None):
     # 从 steps 中找到 start_point 对应的索引
     if step_start is None:
@@ -123,61 +113,3 @@ def save_block_energy(trace, tag, state=0, step_start=None, step_end=None):
         fmt=fmt,
         header="block_size,std_err,std_err_err",
     )
-
-
-# 主函数
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Trace analysis tool")
-
-    parser.add_argument("--file", required=True, help="Path to trace file")
-    parser.add_argument(
-        "--mode",
-        required=True,
-        choices=["plot_se", "plot_block", "save_se", "save_block_e", "mean_energy"],
-        help="Which function to run",
-    )
-
-    parser.add_argument("--state", type=int, default=0, help="State index, default=0")
-    parser.add_argument("--start", type=int, help="Start step")
-    parser.add_argument("--end", type=int, help="End step")
-
-    args = parser.parse_args()
-
-    filename = args.file
-    if not os.path.isfile(filename):
-        raise FileNotFoundError(f"文件不存在: {filename}")
-
-    key = "trace_energy_"
-    pos = filename.find(key)
-    if pos == -1:
-        raise ValueError(f"未找到'{key}'：{filename}")
-    tag = os.path.splitext(filename[pos + len(key) :])[0]
-
-    # 默认 num_state = 1
-    num_state = 1
-    trace = read_trace_file(filename, num_state)
-
-    # 画 S 与 E 的演化图到选定的 end 处
-    if args.mode == "plot_se":
-        simple_plot_trace(trace, state=args.state, step_end=args.end)
-
-    # 画块分析图，范围是输入的 start 到 end
-    if args.mode == "plot_block":
-        simple_plot_block(
-            trace, state=args.state, step_start=args.start, step_end=args.end
-        )
-
-    # 计算均值，剔除掉 start 之前的数据
-    if args.mode == "mean_energy":
-        output_mean_energy(trace, state=args.state, step_start=args.start)
-
-    # 保存 S 与 E 到文件
-    if args.mode == "save_se":
-        save_SE_range(
-            trace, tag, state=args.state, step_start=args.start, step_end=args.end
-        )
-    # 块分析并保存结果到文件
-    if args.mode == "save_block_e":
-        save_block_energy(
-            trace, tag, state=args.state, step_start=args.start, step_end=args.end
-        )
