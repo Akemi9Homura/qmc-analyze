@@ -5,6 +5,11 @@ from lib.read_file import *
 from lib.plot import *
 from lib.analyze import *
 
+""" 
+本主函数分析的是一般的 FCIQMC 记录的 trace 文件，是单个 replica 的输出
+处理不了 replica 的总 trace 文件
+"""
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Trace analysis tool")
 
@@ -33,11 +38,20 @@ if __name__ == "__main__":
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"文件不存在: {filename}")
 
-    key = "trace_energy_"
-    pos = filename.find(key)
-    if pos == -1:
-        raise ValueError(f"未找到'{key}'：{filename}")
-    tag = os.path.splitext(filename[pos + len(key) :])[0]
+    keys = ["trace_energy_", "trace_energy1_", "trace_energy2_"]
+
+    pos = -1
+    matched_key = None
+    for k in keys:
+        pos = filename.find(k)
+        if pos != -1:
+            matched_key = k
+            break
+
+    if matched_key is None:
+        raise ValueError(f"未找到{keys}中的任何一个：{filename}")
+
+    tag = os.path.splitext(filename[pos + len(matched_key) :])[0]
 
     num_state = 1
     trace = read_trace_file(filename, num_state)

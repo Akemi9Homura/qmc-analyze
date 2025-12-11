@@ -130,6 +130,7 @@ def simple_plot_block(trace, state=0, step_start=None, step_end=None):
     plt.ylabel("sigma")
     plt.title(f"Block analysis (state={state}, step {step_start} → {step_end})")
 
+    plt.legend()
     plt.tight_layout()
     plt.show()
     # plt.savefig('block_analysis.png', dpi=600)

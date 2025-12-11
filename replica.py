@@ -24,15 +24,15 @@ if __name__ == "__main__":
         help="Which function to run",
     )
 
-    # start / end 用 --start / --end 写，可为 None，由各函数自己判断
-    # start 是前百分比
-    parser.add_argument("--start", type=float, help="Start step")
+    # start 是数据的前多少百分比要扔掉，默认值设为 0.3
+    parser.add_argument("--start", type=float, default=0.3, help="Start step")
 
     args = parser.parse_args()
 
     filename = args.file
 
     log = read_replica_log(filename)
+    # log = read_replica_log_interval(filename)
 
     if args.mode == "ee":
         ee = replica_mean(log["E"], args.start)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         ej2 = replica_mean(log["J2"], args.start)
         print(f"Replica mean J2 (dropping {args.start*100:.1f}%) = {ej2}")
 
-    elif args.mode == "plotblock_e":
+    elif args.mode == "plot_block_e":
         plot_replica_block(log["E"], args.start)
 
     elif args.mode == "plot_block_j2":

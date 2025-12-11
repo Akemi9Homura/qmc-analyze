@@ -53,6 +53,41 @@ def read_replica_log(filename):
 
     arr = np.fromregex(filename, pattern, dt)
 
+    print(f"共取到 {len(arr)} 个数据点。")
+
+    log = {
+        "E": arr["E"].copy(),  # 拷贝成普通的 1D array
+        "J2": arr["J2"].copy(),
+    }
+    return log
+
+
+def read_replica_log_interval(filename, interval=10):
+    """
+    从输出文件中读取所有
+    'Replica E = ..., J2 = ...'
+    行，返回一个 dict，包含:
+        log["E"]  -> numpy.ndarray
+        log["J2"] -> numpy.ndarray
+    """
+    dt = np.dtype(
+        [
+            ("E", np.float64),
+            ("J2", np.float64),
+        ]
+    )
+
+    # Replica E = -9.99507344, J2 = 0.65899345
+    pattern = r"Replica E\s*=\s*([+-eE0-9\.]+),\s*J2\s*=\s*([+-eE0-9\.]+)"
+
+    arr = np.fromregex(filename, pattern, dt)
+
+    # 原先的写法是第 10 步开始输出，每隔 10 步输出一次
+    # 原输出的第 10 步对应的是程序的第 100 步，每隔 10 步读取也对应程序的每隔 100 步输出
+    arr = arr[9::interval]
+
+    print(f"共取到 {len(arr)} 个数据点。")
+
     log = {
         "E": arr["E"].copy(),  # 拷贝成普通的 1D array
         "J2": arr["J2"].copy(),
