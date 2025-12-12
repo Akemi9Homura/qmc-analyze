@@ -3,14 +3,18 @@ import os
 
 from lib.read_file import *
 from lib.plot import *
-from lib.analyze import *
 from lib.replica_tools import *
 
+"""
+读取并解析 replica 的 log 文件，不处理 trace 文件
+暂时只支持 NS = 1，没写多个态
+"""
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Trace analysis tool")
+    parser = argparse.ArgumentParser(description="Log analysis tool")
 
     # 三个位置参数：file, state(可选，默认0), mode
-    parser.add_argument("file", help="Path to trace file")
+    parser.add_argument("file", help="Path to log file")
     parser.add_argument(
         "state",
         nargs="?",  # 可选的位置参数

@@ -5,9 +5,24 @@
 import numpy as np
 
 
-# 给定一个索引 start_idx，计算从该索引开始到数组末尾的均值
-# 调用的时候输入的是开始的 step，需要找到其在 steps 数组中的索引
-def cal_mean(start_idx, data_array):
-    if start_idx < 0 or start_idx >= len(data_array):
-        raise ValueError("start_idx 超出数据数组范围")
-    return np.mean(data_array[start_idx:], axis=0)
+# 计算单数据的均值，丢弃开头一定百分比的数据。可用于计算 S 与 J2 均值，输入的是对应 state 的列
+def cal_mean(data, drop_ratio):
+    """
+    丢弃前 drop_ratio 比例的数据，返回剩余部分的平均值。
+    data: 一维数组或可迭代对象
+    drop_ratio: 0~1 之间的小数，例如 0.2 表示丢弃前 20%
+    """
+    if not (0.0 <= drop_ratio < 1.0):
+        raise ValueError("drop_ratio 必须在 [0, 1) 范围内，例如 0.2 表示丢弃前 20%")
+
+    arr = np.asarray(data, dtype=float)
+    n = arr.size
+    if n == 0:
+        raise ValueError("data 为空，无法计算平均值。")
+
+    drop_n = int(n * drop_ratio)
+    if drop_n >= n:
+        raise ValueError("丢弃的点数不少于总长度，无法计算平均值。")
+
+    tail = arr[drop_n:]
+    return tail.mean()

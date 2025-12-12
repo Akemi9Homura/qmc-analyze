@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from .block import *
 
 """
-Replica 计算输出 log 暂时用的工具函数
+Replica 计算输出 log 用的工具函数
 """
 
 

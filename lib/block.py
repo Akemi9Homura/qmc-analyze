@@ -19,7 +19,7 @@ def std_err_ratio(X_mean, Y_mean, X_std_err, Y_std_err, cov_XY, data_num):
     return ratio_std_err
 
 
-# 单个 array 的块分析
+# 单个 array 的块分析，不用合成
 def block_analysis(array, ddof=1):
     data_num = len(array)
     i = 0

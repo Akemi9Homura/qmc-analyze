@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from .block import *
 
 
-def simple_plot_trace(trace, state=0, step_end=None):
+def plot_trace(trace, state=0):
     """
     绘制 trace 中某个态的 S 和 E/norm 随 steps 的变化曲线。
 
@@ -13,91 +13,107 @@ def simple_plot_trace(trace, state=0, step_end=None):
         read_trace_file() 返回的字典
     state : int
         要绘图的态编号（默认 0，即第一个态）
-    end : int
-        画到的步数：
-        - 必须是正整数，否则报错
-        - 如果 end > 最大的 step，则画全程
-        - 如果 steps 中没有 end，则画到最接近 end 的那个 step
     """
     steps = trace["steps"]  # 一维数组
-
-    # --- 默认值：如果不传，就是整个区间 ---
-    if step_end is None:
-        step_end = int(steps[-1])
-
-    # --- step_end 对应的索引 ---
-    end_index = np.searchsorted(steps, step_end, side="right")
-    if end_index == 0 or steps[end_index - 1] != step_end:
-        raise ValueError(f"未找到 step_end = {step_end}")
 
     # 取指定态的数据
     S = trace["S"][state]
     E = trace["E"][state]
     norm = trace["norm"][state]
-
-    # 做同样的切片，保证长度一致
-    steps_plot = steps[:end_index]
-    S_plot = S[:end_index]
-    E_plot = E[:end_index]
-    norm_plot = norm[:end_index]
-
-    Enorm_plot = E_plot / norm_plot
+    Enorm = E / norm
 
     # --- 画图 ---
     plt.figure(figsize=(8, 5))
 
-    plt.plot(steps_plot, S_plot, label="S", color="green", linewidth=0.5)
-    plt.plot(steps_plot, Enorm_plot, label="E / norm", color="red", linewidth=1)
+    plt.plot(steps, S, label="S", color="green", linewidth=0.5)
+    plt.plot(steps, Enorm, label="E", color="red", linewidth=1)
 
     plt.xlabel("Steps")
     plt.ylabel("E (MeV)")
-    plt.title(f"Trace Plot (state {state}, end={step_end})")
+    plt.title(f"Evol Plot (state {state})")
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 
-def simple_plot_block(trace, state=0, step_start=None, step_end=None):
+# 块分析能量，丢弃开头一定百分比的数据
+def plot_block_e(trace, drop_ratio, state=0):
     """
-    对给定态在指定 step 区间做块分析，并画出 std_err 随 block_size 的变化。
-    默认分析整个 steps 区间。
+    丢弃前 drop_ratio 比例的数据
+    drop_ratio: 0~1 之间的小数，例如 0.2 表示丢弃前 20%
     """
-    steps = trace["steps"]
+    if not (0.0 <= drop_ratio < 1.0):
+        raise ValueError("drop_ratio 必须在 [0, 1) 范围内，例如 0.2 表示丢弃前 20%")
 
-    # --- 默认值：如果不传，就是整个区间 ---
-    if step_start is None:
-        step_start = int(steps[0])
-    if step_end is None:
-        step_end = int(steps[-1])
+    E_arr = np.asarray(trace["E"][state], dtype=float)
+    norm_arr = np.asarray(trace["norm"][state], dtype=float)
+    n = E_arr.size
+    if n == 0:
+        raise ValueError("data 为空，无法计算平均值。")
 
-    # --- step_start 对应的索引 ---
-    start_index = np.searchsorted(steps, step_start, side="left")
-    if start_index >= len(steps) or steps[start_index] != step_start:
-        raise ValueError(f"未找到 step_start = {step_start}")
+    drop_n = int(n * drop_ratio)
+    if drop_n >= n:
+        raise ValueError("丢弃的点数不少于总长度，无法计算平均值。")
 
-    # --- step_end 对应的索引 ---
-    end_index = np.searchsorted(steps, step_end, side="right")
-    if end_index == 0 or steps[end_index - 1] != step_end:
-        raise ValueError(f"未找到 step_end = {step_end}")
+    E_seg = E_arr[drop_n:]
+    norm_seg = norm_arr[drop_n:]
+    std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg)
+    n = len(std_errs)
+    lengths = [1 << i for i in range(n)]
+    # --- 画图 ---
+    plt.figure(figsize=(7, 5))
+    plt.errorbar(
+        lengths,
+        std_errs,
+        yerr=std_err_errs,
+        color="red",
+        fmt="o-",
+        capsize=4,
+        linewidth=1.5,
+        markersize=5,
+        label="E",
+    )
 
-    # --- 截取对应区间 ---
-    E_seg = trace["E"][state][start_index:end_index]
-    norm_seg = trace["norm"][state][start_index:end_index]
-    S_seg = trace["S"][state][start_index:end_index]
+    plt.xscale("log")
+    plt.xlabel("Block size L")
+    plt.ylabel("sigma")
+    plt.title(f"Block analysis (after dropping {drop_ratio*100:.1f}%)")
 
-    # --- 块分析 ---
+    plt.tight_layout()
+    plt.show()
+
+
+# 块分析 S 与 E，画在一起
+def plot_block_se(trace, drop_ratio, state=0):
+    """
+    丢弃前 drop_ratio 比例的数据
+    drop_ratio: 0~1 之间的小数，例如 0.2 表示丢弃前 20%
+    """
+    if not (0.0 <= drop_ratio < 1.0):
+        raise ValueError("drop_ratio 必须在 [0, 1) 范围内，例如 0.2 表示丢弃前 20%")
+
+    E_arr = np.asarray(trace["E"][state], dtype=float)
+    norm_arr = np.asarray(trace["norm"][state], dtype=float)
+    S_arr = np.asarray(trace["S"][state], dtype=float)
+    n = E_arr.size
+    if n == 0:
+        raise ValueError("data 为空，无法计算平均值。")
+
+    drop_n = int(n * drop_ratio)
+    if drop_n >= n:
+        raise ValueError("丢弃的点数不少于总长度，无法计算平均值。")
+
+    E_seg = E_arr[drop_n:]
+    norm_seg = norm_arr[drop_n:]
+    S_seg = S_arr[drop_n:]
     std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg)
     std_errs_S, std_err_errs_S = block_analysis(S_seg)
 
+    if len(std_errs) != len(std_errs_S):
+        raise ValueError("能量与 S 的块分析结果长度不一致！检查 block_analysis 函数。")
+
     n = len(std_errs)
-    if len(std_errs_S) != n:
-        raise RuntimeError(
-            "E 和 S 的块分析结果长度不一致，请检查 block_analysis 实现。"
-        )
-
-    # block_size = 1,2,4,...,2^(n-1)
     lengths = [1 << i for i in range(n)]
-
     # --- 画图 ---
     plt.figure(figsize=(7, 5))
     # E 的误差条
@@ -128,9 +144,7 @@ def simple_plot_block(trace, state=0, step_start=None, step_end=None):
     plt.xscale("log")
     plt.xlabel("Block size L")
     plt.ylabel("sigma")
-    plt.title(f"Block analysis (state={state}, step {step_start} → {step_end})")
+    plt.title(f"Block analysis (after dropping {drop_ratio*100:.1f}%)")
 
-    plt.legend()
     plt.tight_layout()
     plt.show()
-    # plt.savefig('block_analysis.png', dpi=600)
