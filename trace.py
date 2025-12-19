@@ -38,7 +38,8 @@ if __name__ == "__main__":
         help="Which function to run",
     )
 
-    # start 不是位置参数，用 --start 写
+    # start 不是位置参数，因为有 --，用 --start 写，可以不提供
+    # 而位置参数必须提供
     parser.add_argument("--start", type=float, default=0.3, help="Start step")
 
     args = parser.parse_args()
