@@ -1,17 +1,19 @@
 """
-  Module for reweighting calculations in FCIQMC analysis.
+Module for reweighting calculations in FCIQMC analysis.
 """
 
 import numpy as np
 from .cal import *
 
+
 # 计算 dtau，按照代码的写法写，输入是 FCIQMC 的输入
 def compute_dtau(dtau):
-    hbar = 0.6582119460238695 # MeV zs
+    hbar = 0.6582119460238695  # MeV zs
     return dtau / hbar
 
+
 # 计算权重 W_{Cn}，对每个满足给定 n order 能计算的 step 都计算，返回 array
-def cal_reweight_factor(trace, dtau, order, drop_ratio,state=0):
+def cal_reweight_factor(trace, dtau, order, drop_ratio, state=0):
     """
     丢弃前 drop_ratio 比例的数据
     drop_ratio: 0~1 之间的小数，例如 0.2 表示丢弃前 20%
@@ -22,7 +24,7 @@ def cal_reweight_factor(trace, dtau, order, drop_ratio,state=0):
     steps = np.asarray(trace["steps"], dtype=int)
     S_arr = np.asarray(trace["S"][state], dtype=float)
     n = steps.size
-    
+
     interval = steps[1] - steps[0]
 
     drop_n = int(n * drop_ratio)
@@ -41,7 +43,7 @@ def cal_reweight_factor(trace, dtau, order, drop_ratio,state=0):
     length = len(steps) - start_idx
     if length <= 0:
         raise ValueError(f"丢弃数据后，剩余数据无法满足给定 order = {order} 的计算。")
-    
+
     logW = np.zeros(length, dtype=float)
     es = cal_mean(trace["S"][state], drop_ratio)
     ee = cal_mean(trace["E"][state], drop_ratio)
@@ -54,11 +56,11 @@ def cal_reweight_factor(trace, dtau, order, drop_ratio,state=0):
         step_x1 = steps[idx] - order
         step_x2 = steps[idx] - 1
         sum_S = sum_S_x1x2(S_arr, steps, step_x1, step_x2, interval)
-        logW[i] = -dtau * (sum_S- order * C)
-    
+        logW[i] = -dtau * (sum_S - order * C)
+
     W = np.exp(logW)
     return start_idx, W
-        
+
 
 # 给定 step x1 与 x2，一共的数据数就是 n = order 个，用这些 S 加起来
 def sum_S_x1x2(S_data, steps, x1, x2, A):
@@ -69,9 +71,9 @@ def sum_S_x1x2(S_data, steps, x1, x2, A):
     x1, x2: 起始步和结束步 (闭区间 [x1, x2])
     A:      间隔 (interval)
     """
-    
+
     total_sum = 0.0
-    
+
     # 1. 计算对齐边界
     # ceil_x1: 左侧碎片结束点 (向上取整到 A 的倍数)
     # floor_x2: 中间完整块结束点 (向下取整到 A 的倍数)
@@ -101,11 +103,11 @@ def sum_S_x1x2(S_data, steps, x1, x2, A):
         # 查找切片范围
         # idx_start: ceil_x1 之后的位置 (跳过 ceil_x1)
         # idx_end: floor_x2 之后的位置 (切片包含 floor_x2)
-        idx_start = np.searchsorted(steps, ceil_x1, side='right')
-        idx_end = np.searchsorted(steps, floor_x2, side='right')
-        
+        idx_start = np.searchsorted(steps, ceil_x1, side="right")
+        idx_end = np.searchsorted(steps, floor_x2, side="right")
+
         # 利用切片直接求和并乘 A
-        mid_sum = np.sum(S_data[idx_start : idx_end])
+        mid_sum = np.sum(S_data[idx_start:idx_end])
         total_sum += mid_sum * A
 
     # 3. 右碎片 (Right Fragment): (floor_x2, x2]
@@ -118,8 +120,9 @@ def sum_S_x1x2(S_data, steps, x1, x2, A):
 
     return total_sum
 
+
 # 计算加权能量
-def cal_reweight_energy(E_data, norm_data,start_idx, W):
+def cal_reweight_energy(E_data, norm_data, start_idx, W):
     """
     计算加权能量 <E>_W = sum (E_i*W_i) / sum(norm_i * W_i)
     E_data: 能量数组 (numpy array)
@@ -136,36 +139,49 @@ def cal_reweight_energy(E_data, norm_data,start_idx, W):
         raise ValueError("权重和为零，无法计算加权能量。")
     return weighted_E / sum_W
 
+
 # 计算重加权的 S
-def cal_reweight_S(trace, dtau, order, drop_ratio,state=0):
-    start_idx_n, W_n = cal_reweight_factor(trace, dtau, order, drop_ratio=drop_ratio, state=state)
-    start_idx_n1, W_n1 = cal_reweight_factor(trace, dtau, order+10, drop_ratio=drop_ratio, state=state)
-    
+def cal_reweight_S(trace, dtau, order, drop_ratio, state=0):
+    start_idx_n, W_n = cal_reweight_factor(
+        trace, dtau, order, drop_ratio=drop_ratio, state=state
+    )
+    start_idx_n1, W_n1 = cal_reweight_factor(
+        trace, dtau, order + 10, drop_ratio=drop_ratio, state=state
+    )
+
     # 检查
     if len(W_n) != len(W_n1):
         if len(W_n) != len(W_n1) + 1:
             raise ValueError("计算重加权 S 时，W_n 长度应该为 W_n1 加 1。")
-    
+
     steps = np.asarray(trace["steps"], dtype=int)
     interval = steps[1] - steps[0]
     Nw_arr = np.asarray(trace["Nw"][state], dtype=float)
     S_arr = np.asarray(trace["S"][state], dtype=float)
     C = cal_mean(S_arr, drop_ratio)
-    
+
     start_step_n = steps[start_idx_n]
     start_step_n1 = steps[start_idx_n1]
     if start_step_n1 != start_step_n + interval:
-        raise ValueError("计算重加权 S 时，start_idx_n1 对应的 step 应该比 start_idx_n 多一个间隔。")
+        raise ValueError(
+            "计算重加权 S 时，start_idx_n1 对应的 step 应该比 start_idx_n 多一个间隔。"
+        )
 
     Wn_seg = W_n[:-1]
     Wn1_seg = W_n1
     Nn_seg = Nw_arr[start_idx_n:-1]
     Nn1_seg = Nw_arr[start_idx_n1:]
     # 检查
-    if len(Wn_seg) != len(Wn1_seg) or len(Wn_seg) != len(Nn_seg) or len(Wn_seg) != len(Nn1_seg):
+    if (
+        len(Wn_seg) != len(Wn1_seg)
+        or len(Wn_seg) != len(Nn_seg)
+        or len(Wn_seg) != len(Nn1_seg)
+    ):
         raise ValueError("计算重加权 S 时，各数组长度不匹配。")
-    
+
     # 计算 S
-    reweight_S = C- (1/(interval*dtau)) * np.log( np.sum(Wn1_seg * Nn1_seg) / np.sum(Wn_seg * Nn_seg) )
-    
+    reweight_S = C - (1 / (interval * dtau)) * np.log(
+        np.sum(Wn1_seg * Nn1_seg) / np.sum(Wn_seg * Nn_seg)
+    )
+
     return reweight_S
