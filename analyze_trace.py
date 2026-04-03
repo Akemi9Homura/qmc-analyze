@@ -30,7 +30,7 @@ if __name__ == "__main__":
             "es",
             "ee",
             "ej2",
-            "plot_evol",
+            "plot",
             "block_e",
             "block_se",
             "testlog",
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         enorm = cal_mean(trace["norm"][args.state], drop_ratio=args.start)
         print(f"Mean J2 (dropping {args.start*100:.1f}%) = {ej2 / enorm:.6f}")
 
-    elif args.mode == "plot_evol":
+    elif args.mode == "plot":
         # 画演化图
         if is_replica:
             raise ValueError("replica trace 文件无法画演化图")

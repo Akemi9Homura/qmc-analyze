@@ -5,28 +5,28 @@ from matplotlib.ticker import LogLocator, NullFormatter
 # ==========================================
 # 1. 数据
 # ==========================================
-E_exact = -20.338832  # 精确解 (MeV)，不需要就设为 None
-title = r"$^4$He, N$^2$LO$_\text{opt}$, $\hbar\omega=20$ MeV, $e_\text{max}=2$"
-output_name = "He4_N2LO_opt_emax2_Nwconv"
-mode = "show"  # "show" 或 "save"
+E_exact = -26.325446  # 精确解 (MeV)，不需要就设为 None
+title = r"$^8$Be, N$^2$LO$_\text{opt}$, $\hbar\omega=20$ MeV, $e_\text{max}=2$"
+output_name = "Be8_N2LO_opt_emax2_Nwconv_compare"
+mode = "save"  # "show" 或 "save"
 
 datasets = [
     {
-        "Nw": [5e3, 1e4, 5e4, 1e5, 1e6],
-        "E": [-20.414074, -20.337607, -20.329052, -20.344092, -20.334321],
-        "E_err": [0.037759, 0.037967, 0.015612, 0.009720, 0.004301],
-        "label": r"normal FCIQMC",
+        "Nw": [1e3, 1e4, 1e5, 1e6, 1e7],
+        "E": [-17.665037, -22.745243, -25.244534, -26.053459, -26.231034],
+        "E_err": [1.510845, 0.336048, 0.302033, 0.189082, 0.090923],
+        "label": r"my code",
         "color": "tab:red",
         "fmt": "o-",
     },
-    # {
-    #     "Nw": [1e3, 1e4, 1e5, 1e6],
-    #     "E": [-25.523650, -25.236518, -25.261580, -25.257624],
-    #     "E_err": [0.265006, 0.108813, 0.069038, 0.008988],
-    #     "label": r"MPI",
-    #     "color": "tab:blue",
-    #     "fmt": "s-",
-    # },
+    {
+        "Nw": [1e3, 1e4, 1e5, 1e6, 1e7],
+        "E": [-17.652365, -21.819445, -24.321332, -26.232484, -26.225135],
+        "E_err": [3.338746, 0.770389, 0.270675, 0.393883, 0.131369],
+        "label": r"MPI",
+        "color": "tab:blue",
+        "fmt": "s-",
+    },
     # 继续添加更多线 ...
 ]
 
@@ -115,22 +115,22 @@ ax.legend(frameon=False, loc="best")
 plt.tight_layout()
 
 # 图中添加文字
-ax.text(
-    0.5,
-    0.5,
-    r"$\text{dimension} = 3060$",
-    transform=ax.transAxes,
-    fontsize=16,
-    verticalalignment="top",
-)
-ax.text(
-    0.5,
-    0.4,
-    r"$\text{plateau} \approx 1.8\times 10^3$",
-    transform=ax.transAxes,
-    fontsize=16,
-    verticalalignment="top",
-)
+# ax.text(
+#     0.5,
+#     0.2,
+#     r"$\text{dimension} = 3060$",
+#     transform=ax.transAxes,
+#     fontsize=16,
+#     verticalalignment="top",
+# )
+# ax.text(
+#     0.5,
+#     0.3,
+#     r"$\text{plateau} \approx 1.8\times 10^3$",
+#     transform=ax.transAxes,
+#     fontsize=16,
+#     verticalalignment="top",
+# )
 
 # ==========================================
 # 5. 输出
