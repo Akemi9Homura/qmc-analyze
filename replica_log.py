@@ -8,6 +8,7 @@ from lib.replica_tools import *
 """
 读取并解析 replica 的 log 文件，不处理 trace 文件
 暂时只支持 NS = 1，没写多个态
+不用了，之后删掉
 """
 
 if __name__ == "__main__":

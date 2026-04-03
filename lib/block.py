@@ -25,7 +25,7 @@ def block_analysis(array, ddof=1):
     i = 0
     std_errs = []
     std_err_errs = []
-    print("Starting block analysis for energy...")
+    print("Starting block analysis...")
     # 循环直到2^i大于数据总量
     while True:
         block_size = 1 << i
@@ -67,6 +67,9 @@ def block_analysis(array, ddof=1):
         std_err_err = std_err / np.sqrt(2 * (num_blocks - ddof))
         std_errs.append(std_err)
         std_err_errs.append(std_err_err)
+        print(
+            f"std_err = {std_err:.6f}, std_err_err = {std_err_err:.6f}, std_err_max = {std_err + std_err_err:.6f}"
+        )
 
         i += 1  # 增加块大小指数
 
@@ -84,7 +87,7 @@ def block_analysis_energy(E_array, norm_array, ddof=1):
     i = 0
     std_errs = []
     std_err_errs = []
-    print("Starting block analysis for energy...")
+    print("Starting block analysis...")
     # 循环直到2^i大于数据总量
     while True:
         block_size = 1 << i
@@ -140,6 +143,9 @@ def block_analysis_energy(E_array, norm_array, ddof=1):
         std_err_err = std_err / np.sqrt(2 * (num_blocks - ddof))
         std_errs.append(std_err)
         std_err_errs.append(std_err_err)
+        print(
+            f"std_err = {std_err:.6f}, std_err_err = {std_err_err:.6f}, std_err_max = {std_err + std_err_err:.6f}"
+        )
 
         i += 1  # 增加块大小指数
 

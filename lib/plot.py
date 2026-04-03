@@ -106,7 +106,10 @@ def plot_block_se(trace, drop_ratio, state=0):
     E_seg = E_arr[drop_n:]
     norm_seg = norm_arr[drop_n:]
     S_seg = S_arr[drop_n:]
+    print(f"block analysis for energy")
     std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg)
+    print(f"--" * 40)
+    print(f"block analysis for shift")
     std_errs_S, std_err_errs_S = block_analysis(S_seg)
 
     if len(std_errs) != len(std_errs_S):

@@ -3,22 +3,30 @@ import sys
 
 
 # 读取非 replica 的 trace 文件
+# 与 MPI 版本缺失 sidx 列的代码也匹配，而且 MPI 版本输出的 E 已经除掉 norm 了
 def read_normal_trace_file(filename):
-    # 在胡师兄代码的启发下用 np 读取更快
     data = np.loadtxt(filename, comments="#", delimiter=",", unpack=True)
-    step, sidx, Nw, S, E, J2, norm = data
+
+    if data.shape[0] == 6:
+        # 缺少 sidx 列，插入一列全 0
+        step = data[0]
+        sidx = np.zeros_like(step)
+        Nw, S, E, J2, norm = data[1], data[2], data[3], data[4], data[5]
+        E = E * norm
+    elif data.shape[0] == 7:
+        step, sidx, Nw, S, E, J2, norm = data
+    else:
+        raise ValueError(f"列数不对，期望 6 或 7 列，实际 {data.shape[0]} 列")
 
     steps = np.unique(step)
     steps.sort()
     unique_sidx = np.unique(sidx)
     unique_sidx.sort()
 
-    # 将数据按态分类存储
     arrays_list = [Nw, S, E, J2, norm]
     result_arrays = [[arr[sidx == idx] for idx in unique_sidx] for arr in arrays_list]
     Nw_arrays, S_arrays, E_arrays, J2_arrays, norm_arrays = result_arrays
 
-    # 每一个态的数据是一个 numpy 数组
     trace = {
         "steps": steps,
         "Nw": Nw_arrays,

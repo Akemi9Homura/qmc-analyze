@@ -6,10 +6,10 @@ from lib.plot import *
 from lib.cal import *
 
 """ 
-本主函数分析的是 trace 文件，trace 文件有两种，均支持
+本代码分析 trace 文件，trace 文件有两种，均支持
 一种是 replica 的总 trace 文件，文件头是 # i, replica_E, replica_J2, norm
 另一种是非 replica 的，或 replica 中每个单独记录的，文件头是 # i, Nw, S, E, J2, norm
-根据文件头选择读取哪一种
+根据文件头选择读取哪一种，replica 的现在不用了，需要修改
 """
 
 if __name__ == "__main__":
@@ -31,8 +31,8 @@ if __name__ == "__main__":
             "ee",
             "ej2",
             "plot_evol",
-            "plot_block_e",
-            "plot_block_se",
+            "block_e",
+            "block_se",
             "testlog",
         ],  # 暂时不写 J2 的块分析
         help="Which function to run",
@@ -56,19 +56,19 @@ if __name__ == "__main__":
         if is_replica:
             raise ValueError("replica trace 文件中没有 S 数据，无法计算平均 S")
         es = cal_mean(trace["S"][args.state], drop_ratio=args.start)
-        print(f"Mean S (dropping {args.start*100:.1f}%) = {es}")
+        print(f"Mean S (dropping {args.start*100:.1f}%) = {es:.6f}")
 
     elif args.mode == "ee":
         # 计算 E 均值除以 norm 均值
         ee = cal_mean(trace["E"][args.state], drop_ratio=args.start)
         enorm = cal_mean(trace["norm"][args.state], drop_ratio=args.start)
-        print(f"Mean E (dropping {args.start*100:.1f}%) = {ee/enorm}")
+        print(f"Mean E (dropping {args.start*100:.1f}%) = {ee/enorm:.6f}")
 
     elif args.mode == "ej2":
         # 计算 J2 均值除以 norm 均值
         ej2 = cal_mean(trace["J2"][args.state], drop_ratio=args.start)
         enorm = cal_mean(trace["norm"][args.state], drop_ratio=args.start)
-        print(f"Mean J2 (dropping {args.start*100:.1f}%) = {ej2 / enorm}")
+        print(f"Mean J2 (dropping {args.start*100:.1f}%) = {ej2 / enorm:.6f}")
 
     elif args.mode == "plot_evol":
         # 画演化图
@@ -76,11 +76,11 @@ if __name__ == "__main__":
             raise ValueError("replica trace 文件无法画演化图")
         plot_trace(trace, state=args.state)
 
-    elif args.mode == "plot_block_e":
+    elif args.mode == "block_e":
         # 只画 E 的块分析图
         plot_block_e(trace, drop_ratio=args.start, state=args.state)
 
-    elif args.mode == "plot_block_se":
+    elif args.mode == "block_se":
         # 画 S 与 E 的块分析图
         if is_replica:
             raise ValueError("replica trace 文件中没有 S 数据，无法画 S 的块分析图")
@@ -94,8 +94,8 @@ if __name__ == "__main__":
         ej2 = cal_mean(
             trace["J2"][args.state] / trace["norm"][args.state], drop_ratio=args.start
         )
-        print(f"Mean E (dropping {args.start*100:.1f}%) = {ee}")
-        print(f"Mean J2 (dropping {args.start*100:.1f}%) = {ej2}")
+        print(f"Mean E (dropping {args.start*100:.1f}%) = {ee:.6f}")
+        print(f"Mean J2 (dropping {args.start*100:.1f}%) = {ej2:.6f}")
 
     else:
         raise ValueError(f"未知的 mode: {args.mode}")

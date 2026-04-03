@@ -106,6 +106,6 @@ plt.legend(frameon=False, loc="best")
 plt.tight_layout()
 
 # 显示图片
-# plt.show()
+plt.show()
 # 保存图片
-plt.savefig("trace_plot.pdf", bbox_inches="tight")
+# plt.savefig("trace_plot.pdf", bbox_inches="tight")
