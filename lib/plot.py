@@ -57,7 +57,7 @@ def plot_block_e(trace, drop_ratio, state=0):
 
     E_seg = E_arr[drop_n:]
     norm_seg = norm_arr[drop_n:]
-    std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg)
+    std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg, verbose=True)
     n = len(std_errs)
     lengths = [1 << i for i in range(n)]
     # --- 画图 ---
@@ -107,10 +107,10 @@ def plot_block_se(trace, drop_ratio, state=0):
     norm_seg = norm_arr[drop_n:]
     S_seg = S_arr[drop_n:]
     print(f"block analysis for energy")
-    std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg)
+    std_errs, std_err_errs = block_analysis_energy(E_seg, norm_seg, verbose=True)
     print(f"--" * 40)
     print(f"block analysis for shift")
-    std_errs_S, std_err_errs_S = block_analysis(S_seg)
+    std_errs_S, std_err_errs_S = block_analysis(S_seg, verbose=True)
 
     if len(std_errs) != len(std_errs_S):
         raise ValueError("能量与 S 的块分析结果长度不一致！检查 block_analysis 函数。")

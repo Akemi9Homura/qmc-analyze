@@ -20,12 +20,13 @@ def std_err_ratio(X_mean, Y_mean, X_std_err, Y_std_err, cov_XY, data_num):
 
 
 # 单个 array 的块分析，不用合成
-def block_analysis(array, ddof=1):
+def block_analysis(array, ddof=1, verbose=False):
     data_num = len(array)
     i = 0
     std_errs = []
     std_err_errs = []
-    print("Starting block analysis...")
+    if verbose:
+        print("Starting block analysis...")
     # 循环直到2^i大于数据总量
     while True:
         block_size = 1 << i
@@ -50,7 +51,6 @@ def block_analysis(array, ddof=1):
         if num_blocks <= ddof:
             break
 
-        print(f"i = {i}, block size = {block_size}")
         # 每个 block 求数据的均值
         mean_block = []
         for j in range(num_blocks):
@@ -67,17 +67,23 @@ def block_analysis(array, ddof=1):
         std_err_err = std_err / np.sqrt(2 * (num_blocks - ddof))
         std_errs.append(std_err)
         std_err_errs.append(std_err_err)
-        print(
-            f"std_err = {std_err:.6f}, std_err_err = {std_err_err:.6f}, std_err_max = {std_err + std_err_err:.6f}"
-        )
+        if verbose:
+            print(f"i = {i}, block size = {block_size}")
+            print(
+                f"std_err = {std_err:.6f}, std_err_err = {std_err_err:.6f}, std_err_max = {std_err + std_err_err:.6f}"
+            )
 
         i += 1  # 增加块大小指数
+
+    if verbose:
+        max_val = get_block_std_err_max(std_errs, std_err_errs)
+        print(f">>> 块分析最大 std_err_max = {max_val:.6f}")
 
     return std_errs, std_err_errs
 
 
 # 块分析能量，需要输入未归一化的能量与归一化因子
-def block_analysis_energy(E_array, norm_array, ddof=1):
+def block_analysis_energy(E_array, norm_array, ddof=1, verbose=False):
     # 检查
     if len(E_array) != len(norm_array):
         print("Error: E_array and norm_array must have the same length.")
@@ -87,7 +93,8 @@ def block_analysis_energy(E_array, norm_array, ddof=1):
     i = 0
     std_errs = []
     std_err_errs = []
-    print("Starting block analysis...")
+    if verbose:
+        print("Starting block analysis...")
     # 循环直到2^i大于数据总量
     while True:
         block_size = 1 << i
@@ -112,7 +119,6 @@ def block_analysis_energy(E_array, norm_array, ddof=1):
         if num_blocks <= ddof:
             break
 
-        print(f"i = {i}, block size = {block_size}")
         # 每个 block 求数据的均值
         Emean_block = []
         normmean_block = []
@@ -143,10 +149,22 @@ def block_analysis_energy(E_array, norm_array, ddof=1):
         std_err_err = std_err / np.sqrt(2 * (num_blocks - ddof))
         std_errs.append(std_err)
         std_err_errs.append(std_err_err)
-        print(
-            f"std_err = {std_err:.6f}, std_err_err = {std_err_err:.6f}, std_err_max = {std_err + std_err_err:.6f}"
-        )
+        if verbose:
+            print(f"i = {i}, block size = {block_size}")
+            print(
+                f"std_err = {std_err:.6f}, std_err_err = {std_err_err:.6f}, std_err_max = {std_err + std_err_err:.6f}"
+            )
 
         i += 1  # 增加块大小指数
 
+    if verbose:
+        max_val = get_block_std_err_max(std_errs, std_err_errs)
+        print(f">>> 块分析最大 std_err_max = {max_val:.6f}")
+
     return std_errs, std_err_errs
+
+
+def get_block_std_err_max(std_errs, std_err_errs):
+    """取块分析中 std_err + std_err_err 的最大值作为保守误差估计"""
+    maxval = max(s + e for s, e in zip(std_errs, std_err_errs))
+    return maxval

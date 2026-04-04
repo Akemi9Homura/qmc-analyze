@@ -5,10 +5,10 @@ from matplotlib.ticker import LogLocator, NullFormatter
 # ==========================================
 # 1. 数据
 # ==========================================
-E_exact = -26.325446  # 精确解 (MeV)，不需要就设为 None
-title = r"$^8$Be, N$^2$LO$_\text{opt}$, $\hbar\omega=20$ MeV, $e_\text{max}=2$"
-output_name = "Be8_N2LO_opt_emax2_Nwconv_compare"
-mode = "save"  # "show" 或 "save"
+E_exact = -25.291223  # 精确解 (MeV)，不需要就设为 None
+title = r"$^4$He, N$^2$LO$_\text{opt}$, $\hbar\omega=20$ MeV, $e_\text{max}=4$"
+output_name = "He4_N2LO_opt_emax4_Nwconv_compare"
+mode = "show"  # "show" 或 "save"
 
 datasets = [
     {

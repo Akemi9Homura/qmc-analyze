@@ -1,5 +1,7 @@
 import argparse
 import os
+import sys
+import numpy as np
 
 from lib.read_file import *
 from lib.plot import *
@@ -13,17 +15,24 @@ from lib.cal import *
 """
 
 if __name__ == "__main__":
+    # 如果最后一个参数不在 choices 里，说明 mode 没有提供，手动补上 "all"
+    _choices = {
+        "es",
+        "ee",
+        "ej2",
+        "plot",
+        "plot_block_e",
+        "plot_block_se",
+        "all",
+        "testlog",
+    }
+    if len(sys.argv) >= 2 and sys.argv[-1] not in _choices:
+        sys.argv.append("all")
+
     parser = argparse.ArgumentParser(description="Log analysis tool")
 
-    # 三个位置参数：file, state(可选，默认0), mode
+    # 位置参数：file, mode
     parser.add_argument("file", help="Path to log file")
-    parser.add_argument(
-        "state",
-        nargs="?",  # 可选的位置参数
-        type=int,
-        default=0,  # 不写时 state=0
-        help="State index (positional), default=0",
-    )
     parser.add_argument(
         "mode",
         choices=[
@@ -31,15 +40,16 @@ if __name__ == "__main__":
             "ee",
             "ej2",
             "plot",
-            "block_e",
-            "block_se",
+            "plot_block_e",
+            "plot_block_se",
+            "all",
             "testlog",
-        ],  # 暂时不写 J2 的块分析
-        help="Which function to run",
+        ],
+        help="Which function to run (default: all)",
     )
 
-    # start 不是位置参数，因为有 --，用 --start 写，可以不提供
-    # 而位置参数必须提供
+    # 选项参数：--state, --start
+    parser.add_argument("--state", type=int, default=0, help="State index, default=0")
     parser.add_argument("--start", type=float, default=0.3, help="Start step")
 
     args = parser.parse_args()
@@ -76,15 +86,69 @@ if __name__ == "__main__":
             raise ValueError("replica trace 文件无法画演化图")
         plot_trace(trace, state=args.state)
 
-    elif args.mode == "block_e":
+    elif args.mode == "plot_block_e":
         # 只画 E 的块分析图
         plot_block_e(trace, drop_ratio=args.start, state=args.state)
 
-    elif args.mode == "block_se":
+    elif args.mode == "plot_block_se":
         # 画 S 与 E 的块分析图
         if is_replica:
             raise ValueError("replica trace 文件中没有 S 数据，无法画 S 的块分析图")
         plot_block_se(trace, drop_ratio=args.start, state=args.state)
+
+    elif args.mode == "all":
+        if is_replica:
+            raise ValueError("replica trace 文件不支持 all 分析")
+
+        E_arr = np.asarray(trace["E"][args.state], dtype=float)
+        norm_arr = np.asarray(trace["norm"][args.state], dtype=float)
+        S_arr = np.asarray(trace["S"][args.state], dtype=float)
+
+        n = E_arr.size
+        drop_n = int(n * args.start)
+
+        E_seg = E_arr[drop_n:]
+        norm_seg = norm_arr[drop_n:]
+        S_seg = S_arr[drop_n:]
+
+        # 中心值
+        s_mean = np.mean(S_seg)
+        e_mean = np.mean(E_seg) / np.mean(norm_seg)
+
+        # 各自的块分析
+        std_errs_E, std_err_errs_E = block_analysis_energy(E_seg, norm_seg)
+        std_errs_S, std_err_errs_S = block_analysis(S_seg)
+
+        sigma_e = get_block_std_err_max(std_errs_E, std_err_errs_E)
+        sigma_s = get_block_std_err_max(std_errs_S, std_err_errs_S)
+
+        print(f"S (dropping {args.start*100:.1f}%): {s_mean:.6f} ± {sigma_s:.6f}")
+        print(f"E (dropping {args.start*100:.1f}%): {e_mean:.6f} ± {sigma_e:.6f}")
+
+        # 对差值序列做块分析，自动包含协方差
+        # 这是为了验证 S 与 E 收敛到同一值，否则演化还不够
+        delta_seg = S_seg - E_seg / norm_seg
+        std_errs_D, std_err_errs_D = block_analysis(delta_seg)
+        sigma_d = get_block_std_err_max(std_errs_D, std_err_errs_D)
+        delta_mean = np.mean(delta_seg)
+
+        n_sigma = abs(delta_mean) / sigma_d
+        if n_sigma <= 1:
+            print(
+                f"S 与 E 一致: Δ = {delta_mean:.6f} ± {sigma_d:.6f} ({n_sigma:.2f}σ)"
+            )
+        elif n_sigma <= 2:
+            print(
+                f"S 与 E 轻微偏差: Δ = {delta_mean:.6f} ± {sigma_d:.6f} ({n_sigma:.2f}σ)"
+            )
+        elif n_sigma <= 3:
+            print(
+                f"警告，S 与 E 大偏差，演化未收敛: Δ = {delta_mean:.6f} ± {sigma_d:.6f} ({n_sigma:.2f}σ)"
+            )
+        else:
+            print(
+                f"错误，S 与 E 不一致，演化未收敛: Δ = {delta_mean:.6f} ± {sigma_d:.6f} ({n_sigma:.2f}σ)"
+            )
 
     elif args.mode == "testlog":
         # 与处理 log 的函数比较，检查可能的错误
