@@ -1,30 +1,31 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import LogLocator, NullFormatter
+from matplotlib.transforms import blended_transform_factory
 
 # ==========================================
 # 1. 数据
 # ==========================================
-E_exact = -25.291223  # 精确解 (MeV)，不需要就设为 None
-title = r"$^4$He, N$^2$LO$_\text{opt}$, $\hbar\omega=20$ MeV, $e_\text{max}=4$"
-output_name = "He4_N2LO_opt_emax4_Nwconv_compare"
+E_exact = -135.860733  # 精确解 (MeV)，不需要就设为 None
+title = r"$^{28}$Si, USDB"
+output_name = "Si28_USDB_ERDM"
 mode = "show"  # "show" 或 "save"
 
 datasets = [
     {
-        "Nw": [1e3, 1e4, 1e5, 1e6, 1e7],
-        "E": [-17.665037, -22.745243, -25.244534, -26.053459, -26.231034],
-        "E_err": [1.510845, 0.336048, 0.302033, 0.189082, 0.090923],
-        "label": r"my code",
-        "color": "tab:red",
-        "fmt": "o-",
+        "Nw": [1e3, 5e3, 1e4, 5e4, 1e5],
+        "E": [-136.288881, -135.768180, -135.846043, -135.904361, -135.894718],
+        "E_err": [0.135360, 0.035722, 0.038033, 0.024219, 0.024532],
+        "label": r"$E_\text{proj}$",
+        "color": "tab:blue",
+        "fmt": "s-",
     },
     {
-        "Nw": [1e3, 1e4, 1e5, 1e6, 1e7],
-        "E": [-17.652365, -21.819445, -24.321332, -26.232484, -26.225135],
-        "E_err": [3.338746, 0.770389, 0.270675, 0.393883, 0.131369],
-        "label": r"MPI",
-        "color": "tab:blue",
+        "Nw": [1e3, 5e3, 1e4, 5e4, 1e5],
+        "E": [-132.809359, -134.320946, -134.826566, -135.722934, -135.834748],
+        "E_err": [0.046806, 0.018762, 0.016398, 0.006093, 0.004477],
+        "label": r"$E_\text{RDM}$",
+        "color": "tab:green",
         "fmt": "s-",
     },
     # 继续添加更多线 ...
@@ -55,7 +56,7 @@ config = {
     "axes.labelsize": 20,
     "xtick.labelsize": 20,
     "ytick.labelsize": 20,
-    "legend.fontsize": 20,
+    "legend.fontsize": 18,
 }
 plt.rcParams.update(config)
 
@@ -85,8 +86,18 @@ if E_exact is not None:
         color="black",
         linestyle="--",
         linewidth=2,
-        label="NCSM",
+        # label="NCSM",
         zorder=5,
+    )
+    trans = blended_transform_factory(plt.gca().transAxes, plt.gca().transData)
+    plt.gca().text(
+        0.05,
+        E_exact + 0.1,
+        "NCSM",
+        fontsize=18,
+        ha="left",
+        va="bottom",
+        transform=trans,
     )
 
 # ==========================================
@@ -106,12 +117,14 @@ ax.xaxis.set_minor_formatter(NullFormatter())
 ax.tick_params(axis="x", which="major", pad=8)
 ax.tick_params(axis="y", which="major", pad=5)
 
+# ax.set_ylim(-180, -120)
+
 plt.xlabel(r"$N_w$")
 plt.ylabel(r"$E$ (MeV)")
 if title is not None:
     plt.title(title)
 
-ax.legend(frameon=False, loc="best")
+ax.legend(frameon=False, loc="upper right")
 plt.tight_layout()
 
 # 图中添加文字
